@@ -1,32 +1,24 @@
 import re
-import logging
 import asyncio
 import time
 
-from manhwaDownloader.clients import manytoonClient
+from manhwaDownloader.clients import webtoonXYZClient as client
 from manhwaDownloader.core import asyncioDownloader
 from manhwaDownloader.core import output
 from manhwaDownloader.core import imgToPDF
 
-logging.basicConfig(level=logging.DEBUG)
-
 if __name__ == '__main__':
-    seriesName = ''
-    startUrl = ''
-    startChapter = 1
-    endChapter = 2
+    startUrl = 'https://www.webtoon.xyz/read/worn-and-torn-newbie/chapter-0/'
+    seriesName = 'worn-and-torn-newbie'
+    startClient = client.Client(siteUrl=startUrl)
 
     start = time.time()
+    siteList = list(startClient.gatherUrls())
 
-    # Gather all site urls
-    siteList = manytoonClient.GatherUrls().gatherUrls(siteUrl=startUrl,
-                                                      startChapter=startChapter,
-                                                      endChapter=endChapter)
-
-    for site in siteList:
-        logging.info(site)
-        client = manytoonClient.Client(siteUrl=site)
-        siteInfoDict = client.gatherSiteInfo()
+    for site in siteList[:1]:
+        print(site)
+        siteClient = client.Client(siteUrl=site)
+        siteInfoDict = siteClient.gatherSiteInfo()
 
         ad = asyncioDownloader.AsyncioDownloader(siteInfoDict)
         sites = asyncio.run(ad.createTasks())
@@ -36,12 +28,11 @@ if __name__ == '__main__':
         imgNum = 1
         for imgData in sites:
             output.Output(seriesName).toFile(cleanChapterName, imgNum, imgData, saveToProjectFolder=False)
-            imgNum += imgNum
+            imgNum += 1
 
-
-    # # Convert image to PDF
+    # Convert image to PDF
     converter = imgToPDF.ImgToPDF(seriesName)
-    converter.run(removeStrFromName='', deleteFolders=True)
+    converter.run(removeStrFromName='- WEBTOON XYZ', deleteFolders=False)
 
     end = time.time()
-    logging.info((end - start)/60)
+    print((end - start) / 60)

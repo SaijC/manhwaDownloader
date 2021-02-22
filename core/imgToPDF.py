@@ -48,7 +48,6 @@ class ImgToPDF:
         """
         width, height = im.size
         imgHeight = 2500
-
         if height - bottom <= 0:
             top = top + 1
             im1 = im.crop((0, top, width, bottom))
@@ -64,6 +63,25 @@ class ImgToPDF:
             cropedImgList.append(im1)
             self._imgCrop(im, top + imgHeight, bottom + imgHeight, cropedImgList)
 
+    def _deleteSmallImgs(self, inProjectFolder=False, triggerSize=900):
+        """
+        delete small images of size 900px or smaller
+        :param inProjectFolder: bool search all project folder
+        :param triggerSize: int
+        :return:
+        """
+        folderDict = self._iterateFoldersForFiles(inProjectFolder)
+        for folderPath, filesList in folderDict.items():
+            if os.path.isdir(folderPath):
+                for file in filesList:
+                    fullPath = os.path.join(folderPath, file)
+                    extension = fullPath.split('.')[-1]
+                    if extension in CONST.GREENLIST:
+                        with Image.open(fullPath) as image1:
+                            width, height = image1.size
+                        if height <= triggerSize:
+                            os.remove(os.path.join(folderPath, file))
+
     def deleteAllPDF(self, inProjectFolder=False):
         """
         Delete all PDFs
@@ -74,12 +92,10 @@ class ImgToPDF:
         for folderPath, filesList in folderDict.items():
             if os.path.isdir(folderPath):
                 for file in filesList:
-                    logging.info(folderPath)
                     fullPath = os.path.join(folderPath, file)
                     extension = fullPath.split('.')[-1]
                     if extension in CONST.GREENLIST:
                         os.remove(fullPath)
-        logging.info('All PDFs removed!')
 
     def deleteAllImg(self, inProjectFolder=False):
         """
@@ -91,12 +107,10 @@ class ImgToPDF:
         for folderPath, filesList in folderDict.items():
             if os.path.isdir(folderPath):
                 for file in filesList:
-                    logging.info(folderPath)
                     fullPath = os.path.join(folderPath, file)
                     extension = fullPath.split('.')[-1]
                     if extension in CONST.GREENLIST:
                         os.remove(fullPath)
-        logging.info('All images removed!')
 
     def deleteAllFolders(self, inProjectFolder=False):
         """
@@ -107,11 +121,10 @@ class ImgToPDF:
         folderDict = self._iterateFoldersForFiles(inProjectFolder)
         for folderPath, filesList in folderDict.items():
             shutil.rmtree(folderPath, ignore_errors=True)
-            logging.info('All project removed!')
 
-    def cropLargeImges(self, inProjectFolder=False):
+    def cropLargeImges(self, inProjectFolder=False, triggerSize=5000):
         """
-        crop images that are too big < 14000px
+        crop images that are too big < triggerSize
         :param inProjectFolder: bool search all project folder
         :return:
         """
@@ -124,14 +137,12 @@ class ImgToPDF:
                     cropedImgList = list()
                     fullPath = os.path.join(folderPath, file)
                     extension = fullPath.split('.')[-1]
-
                     if extension in CONST.GREENLIST:
-                        image1 = Image.open(fullPath)
-                        width, height = image1.size
-                        if height > 14000:
-                            originalImg.append(fullPath)
-                            self._imgCrop(image1, 0, 2500, cropedImgList)
-
+                        with Image.open(fullPath) as image1:
+                            width, height = image1.size
+                            if height > triggerSize:
+                                originalImg.append(fullPath)
+                                self._imgCrop(image1, 0, 2500, cropedImgList)
                         for img in cropedImgList:
                             img.save(f'{folderPath}\\{imgNum:03d}_CROPPED.jpg')
                             imgNum += 1
@@ -146,6 +157,7 @@ class ImgToPDF:
         """
         folderDict = self._iterateFoldersForFiles(inProjectFolder)
         for folderPath, filesList in folderDict.items():
+            print(f'Converting Chapter: {folderPath}...')
             if os.path.isdir(folderPath):
                 convertedImgList = list()
                 for file in filesList:
@@ -160,12 +172,11 @@ class ImgToPDF:
                 pdfPath = os.path.join(folderPath, pdfName)
 
                 if not os.path.exists(pdfPath):
-                    logging.info(f'converting: {pdfName}')
                     convertedImgList[0].save(pdfPath,
                                              save_all=True,
                                              append_images=convertedImgList[1:])
                 else:
-                    logging.info(f'file exists SKIPPING: {pdfName}')
+                    print(f'file exists SKIPPING: {pdfName}')
 
     def checkImgFiles(self, inProjectFolder=False):
         """
@@ -195,7 +206,7 @@ class ImgToPDF:
         """
         for dir in os.listdir(self.manhwaPath):
             path = os.path.join(self.manhwaPath, dir)
-            if os.path.isdir(path):
+            if os.path.exists(path):
                 newPathName = path.replace(subString, '').strip()
                 os.rename(path, newPathName)
 
@@ -213,6 +224,7 @@ class ImgToPDF:
                     extension = fullPath.split('.')[-1]
                     if extension == 'pdf':
                         shutil.move(fullPath, self.manhwaPath)
+                        print(f'Your PDF Is Ready: {file}')
 
     def run(self, removeStrFromName='', inProjectFolder=False, deleteFolders=False):
         """
@@ -224,14 +236,11 @@ class ImgToPDF:
         if check:
             return check
         else:
+            self._deleteSmallImgs()
             self.cropLargeImges()
-            if removeStrFromName:
-                self.removeStrFromName(removeStrFromName)
             self.convertToPDF(inProjectFolder)
             self.movePDFtoParentFolder(inProjectFolder)
             if deleteFolders:
                 self.deleteAllFolders()
-
-
-converter = ImgToPDF('a-wonderful-new-world')
-print(converter.run())
+            if removeStrFromName:
+                self.removeStrFromName(removeStrFromName)
