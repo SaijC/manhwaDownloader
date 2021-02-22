@@ -1,6 +1,6 @@
 import re
 from bs4 import BeautifulSoup
-from manhwaDownloader.core import baseClient
+from manhwaDownloader.clients import baseClient
 
 import logging
 logging.basicConfig(level=logging.DEBUG)

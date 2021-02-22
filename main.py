@@ -3,7 +3,7 @@ import logging
 import asyncio
 import time
 
-from manhwaDownloader.core import manytoonClient
+from manhwaDownloader.clients import manytoonClient
 from manhwaDownloader.core import asyncioDownloader
 from manhwaDownloader.core import output
 from manhwaDownloader.core import imgToPDF
@@ -33,10 +33,10 @@ if __name__ == '__main__':
         chapterName = [key for key in siteInfoDict.keys()]
         cleanChapterName = re.sub('[^\w\-_\. ]', '', chapterName[0])
 
-        num = 1
+        imgNum = 1
         for imgData in sites:
-            output.Output(seriesName).toFile(cleanChapterName, num, imgData, saveToProjectFolder=False)
-            num = num + 1
+            output.Output(seriesName).toFile(cleanChapterName, imgNum, imgData, saveToProjectFolder=False)
+            imgNum += imgNum
 
 
     # # Convert image to PDF
