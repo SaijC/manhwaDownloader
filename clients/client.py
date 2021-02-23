@@ -6,6 +6,7 @@ from manhwaDownloader.constants import CONSTANTS as CONST
 import re
 import asyncio
 import cfscrape
+import logging
 
 
 class Client:
@@ -26,8 +27,12 @@ class Client:
         """
         imgInfoDict = dict()
         chapterTitle = soup.title.string
+
+        # get image tags information from dictionary, to search for images links
         gatherImgTags = soup.find_all(self.siteTemplateDict['gatherImgTags'][0],
                                       self.siteTemplateDict['gatherImgTags'][1])
+
+        # gather site links in a dictionary
         for tag in gatherImgTags:
             gatherRawLink = tag[self.siteTemplateDict['gatherRawLink']]
             cleanLink = gatherRawLink.strip()
@@ -53,24 +58,27 @@ class Client:
             siteUrlList.add(cleanLink)
         return siteUrlList
 
-    def run(self, url):
+    def run(self, url, numChapters=None):
         """
         recursive get wesite
         :param url: url link
         :return: None
         """
+
         print(f'Downloading: {url}...')
         response = self.scraper.get(url)
-        if not response.status_code == 200:
+        if not response.status_code == 200 or numChapters is 0:
             return
         else:
             siteContent = response.content
             soup = BeautifulSoup(siteContent, 'html.parser')
             siteInfoDict = self.gatherSiteInfo(soup)
 
+            # use asyncio to download images
             ad = asyncioDownloader.AsyncioDownloader(siteInfoDict)
             sites = asyncio.run(ad.createTasks())
 
+            # get chapter name from dictionary and remove illegal character for path
             chapterName = [key for key in siteInfoDict.keys()]
             cleanChapterName = re.sub(CONST.REMOVEILLEGALCHARS, '', chapterName[0])
 
@@ -80,5 +88,7 @@ class Client:
                 output.Output(self.seriesName).toFile(cleanChapterName, imgNum, imgData, saveToProjectFolder=False)
                 imgNum += 1
 
+            # get next url
             nextUrl = list(self.getNext(soup))
+            chapterName
             self.run(nextUrl[0])
