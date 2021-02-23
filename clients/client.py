@@ -18,14 +18,13 @@ class Client:
         self.siteTemplateDict = CONST.SITETEMPLATEDICT[useTemplate]
         self.scraper = cfscrape.create_scraper()
 
-    def gatherSiteInfo(self, response):
+    def gatherSiteInfo(self, soup):
         """
         gather information from given site chapterName, imgNum and imgLink
+        :param soup: BeautifulSoup object
         :return: dict {chapterName: [(imgNum, imgUrl), ...)]}
         """
         imgInfoDict = dict()
-        siteContent = response.content
-        soup = BeautifulSoup(siteContent, 'html.parser')
         chapterTitle = soup.title.string
         gatherImgTags = soup.find_all(self.siteTemplateDict['gatherImgTags'][0],
                                       self.siteTemplateDict['gatherImgTags'][1])
@@ -39,14 +38,13 @@ class Client:
                 imgInfoDict[chapterTitle].append(cleanLink)
         return imgInfoDict
 
-    def getNext(self, response):
+    def getNext(self, soup):
         """
         get next chapter url
+        :param soup: BeautifulSoup object
         :return: set
         """
         siteUrlList = set()
-        siteContent = response.content
-        soup = BeautifulSoup(siteContent, 'html.parser')
         imgTags = soup.find_all(self.siteTemplateDict['nextImgTags'][0],
                                 self.siteTemplateDict['nextImgTags'][1])
         for tag in imgTags:
@@ -66,7 +64,9 @@ class Client:
         if not response.status_code == 200:
             return
         else:
-            siteInfoDict = self.gatherSiteInfo(response)
+            siteContent = response.content
+            soup = BeautifulSoup(siteContent, 'html.parser')
+            siteInfoDict = self.gatherSiteInfo(soup)
 
             ad = asyncioDownloader.AsyncioDownloader(siteInfoDict)
             sites = asyncio.run(ad.createTasks())
@@ -74,9 +74,11 @@ class Client:
             chapterName = [key for key in siteInfoDict.keys()]
             cleanChapterName = re.sub(CONST.REMOVEILLEGALCHARS, '', chapterName[0])
 
+            # save image data
             imgNum = 1
             for imgData in sites:
                 output.Output(self.seriesName).toFile(cleanChapterName, imgNum, imgData, saveToProjectFolder=False)
                 imgNum += 1
-            nextUrl = list(self.getNext(response))
+
+            nextUrl = list(self.getNext(soup))
             self.run(nextUrl[0])

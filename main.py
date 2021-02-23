@@ -1,4 +1,3 @@
-
 import time
 
 from manhwaDownloader.clients import client as client
