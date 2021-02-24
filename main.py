@@ -5,11 +5,11 @@ from manhwaDownloader.core import imgToPDF
 
 if __name__ == '__main__':
     start = time.time()
-    startUrl = 'https://manytoon.com/comic/tales-of-demons-and-gods/chapter-2-viewing-the-sky-from-the-bottom-of-the-well/'
-    seriesName = 'tales-of-demons-and-gods'
+    startUrl = 'https://www.tappytoon.com/en/chapters/751940412?'
+    seriesName = 'beauty-beast'
 
-    myClient = client.Client(useTemplate='manytoon', seriesName=seriesName)
-    myClient.run(url=startUrl)
+    myClient = client.Client(useTemplate='webtoonXYZ', seriesName=seriesName)
+    myClient.run(url=startUrl, numChapters=1)
 
     # Convert image to PDF
     converter = imgToPDF.ImgToPDF(seriesName)

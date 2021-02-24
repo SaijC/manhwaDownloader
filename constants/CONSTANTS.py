@@ -21,8 +21,8 @@ SITETEMPLATEDICT = {
     },
     'webtoonXYZ': {
         'gatherImgTags': ('img', {'class': 'wp-manga-chapter-img'}),
-        'gatherRawLink': 'src',
-        'imgTags': ('a', {'class': 'btn next_page'}),
-        'rawLink': 'href',
+        'gatherRawLink': 'data-src',
+        'nextImgTags': ('a', {'class': 'btn next_page'}),
+        'nextRawLink': 'href'
     }
 }

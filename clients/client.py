@@ -50,6 +50,7 @@ class Client:
         :return: set
         """
         siteUrlList = set()
+
         imgTags = soup.find_all(self.siteTemplateDict['nextImgTags'][0],
                                 self.siteTemplateDict['nextImgTags'][1])
         for tag in imgTags:
@@ -70,8 +71,12 @@ class Client:
         if not response.status_code == 200 or numChapters is 0:
             return
         else:
+            if numChapters:
+                numChapters = numChapters - 1
+
             siteContent = response.content
             soup = BeautifulSoup(siteContent, 'html.parser')
+            print(soup)
             siteInfoDict = self.gatherSiteInfo(soup)
 
             # use asyncio to download images
@@ -90,5 +95,8 @@ class Client:
 
             # get next url
             nextUrl = list(self.getNext(soup))
-            chapterName
-            self.run(nextUrl[0])
+
+            if numChapters == 0:
+                return
+            else:
+                self.run(nextUrl[0], numChapters=numChapters)
